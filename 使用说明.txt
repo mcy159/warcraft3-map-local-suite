@@ -1,0 +1,58 @@
+平台图离线游玩通用注入包 - 使用说明
+==========================================
+
+一、包内容
+  bin\                魔兽争霸增强运行库 (YDWE 运行环境, 含 d3d8proxy / ucrtbase /
+                     LuaEngine / SlkLib / StormLib 等全套依赖)
+  plugin\warcraft3\   JAPI 插件集 (dzclient_api / yd_jass_api / yd_lua_engine /
+                     yd_size_limit / yd_virtual_mpq 等 9 插件, 由 config.cfg 控制开关)
+  Game_patched2.dll   大图补丁版 Game.dll (地图大小限制 8MB -> 1GB)
+                     MD5: 690A546C9567C598262518E830286CC3  (原版 MD5: 267861A0DFD416DBAD13E7EE3EC7794A)
+  version127a\       1.27a 版本文件 (War3/Game/Storm/Mss32/ijl15/blizzard/worldedit/redist)
+                     用于把任意旧版本 (1.20e/1.24e/1.26/1.27b 等) 自动转换到 1.27a
+  maps\               放置平台图 (.w3x) 的目录, deploy 时自动复制到游戏 Maps\Download
+  deploy.bat          一键部署脚本 (可拖入 war3.exe 或游戏目录, 或自动读注册表)
+  uninstall.bat       一键卸载脚本 (还原 Game.dll, 删除 bin/plugin/war3.bat)
+  verify.ps1          部署结果验证脚本
+  patch_game.py       从原版 Game.dll 重建补丁版的脚本 (可选, 一般用不到)
+
+二、前提
+  * 任意版本魔兽争霸3冰封王座 (1.20e ~ 1.27b 均可)
+    - deploy.bat 会自动检测版本并执行版本转换: 是 1.27a 直接打补丁; 不是则先自动转换到 1.27a
+      (转换前会备份旧版本核心文件为 *.ver127bak, 可用 uninstall.bat 一键还原)
+    - 若不想转换版本, 请先自行把游戏升级到 1.27a
+  * 部署前请关闭正在运行的魔兽
+
+三、部署步骤
+  1. 解压本包到任意目录 (路径可含中文, 建议放英文路径更稳)
+  2. 把要玩的平台图 (.w3x, 如西方世界的劫难7 258MB 大图) 放进 maps\ 目录
+  3. 双击 deploy.bat, 按提示操作
+     - 目标目录: 可直接把 war3.exe 拖到 deploy.bat 图标上, 或在命令行带参数;
+       脚本也会自动读取注册表 InstallPath; 以上都没有则手动输入
+     - Game.dll: 脚本自动检测 MD5
+       267861A0(1.27a原版) / F05B1A20(1.27a变体) -> 备份为 Game.dll.bak 并打大图补丁
+       690A546C(已是补丁版)                     -> 跳过
+       其他 (旧版本)                            -> 自动转换到 1.27a 再打补丁
+     - 询问"是否写入注册表 InstallPath": 建议选 Y (HKCU 无需管理员,
+       HKLM 需管理员, 失败会提示但不影响使用)
+     - 询问"是否复制地图": 选 Y, 自动复制到 游戏目录\Maps\Download
+  4. 双击游戏目录下的 war3.bat 启动游戏 (内容: bin\YDWEConfig.exe -launchwar3)
+  5. 主菜单 -> 自定义游戏 -> 选择 Maps\Download 里的图 -> 创建 -> 开始
+
+四、注意事项
+  * 杀毒软件可能拦截 war3.bat / YDWEConfig.exe / d3d8proxy.dll, 请添加信任白名单
+  * plugin\warcraft3\config.cfg 可调插件开关, 其中 dzclient_api.dll = 1 必须保持开启
+  * Game.dll.bak 保留在游戏目录, 可随时用 uninstall.bat 一键还原
+  * 大图 (超过 8MB) 必须先部署本包, 否则游戏加载时会提示地图过大
+  * 若进图闪退: 确认 Game.dll 已打补丁 (用 verify.ps1 验证), 确认是 1.27a
+  * 旧版本备份为 *.ver127bak, 还原时手动改回文件名即可
+
+五、部署验证
+  PowerShell 运行:
+    powershell -ExecutionPolicy Bypass -File verify.ps1 "游戏目录"
+  输出全部 [PASS] 即部署正确。
+
+六、重要 - 安装路径要求
+  YDWEConfig 启动器无法从深层路径 (如 E:\aiwork\...\test_clean\...) 启动游戏。
+  请把游戏部署在浅路径: 如 E:\War3\、D:\Game\、E:\test_clean\ 这种 1-2 层目录下。
+  (实测: 深层路径启动失败, 浅路径正常)
