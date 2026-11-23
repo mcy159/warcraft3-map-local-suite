@@ -86,3 +86,8 @@
   * 杀毒软件可能拦截 war3.bat / SuWar3Tools (程序有加密, 误报属正常), 请添加白名单
   * 卸载: 删除游戏目录下 bin\ plugin\ war3.bat, Game.dll 用 Game.dll.bak 还原
   * 本工具仅供离线单机游玩平台图/学习交流使用, 请支持正版
+
+八、多魔兽共存
+  * 本包支持多份魔兽安装共存：从哪个目录双击 war3.bat 启动，就玩哪个目录的魔兽。
+  * war3.bat 启动时会自动把注册表 InstallPath 指向当前游戏目录（HKCU + HKLM\WOW6432Node 各一条），YDWEConfig 按注册表定位游戏，不会再串到别的安装。
+  * 前提：每份魔兽都要各自部署过本包（bin/plugin/version127a/tools/Game.dll 补丁），直接复制部署好的整个游戏目录即可。
