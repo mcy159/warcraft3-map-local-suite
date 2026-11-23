@@ -9,85 +9,80 @@
   version127a\        1.27a (1.27.0.52240) 完整可执行集: War3.exe / worldedit.exe /
                      Storm.dll / Mss32.dll / redist\miles 音视频依赖 (覆盖到游戏根目录用)
   Game_patched2.dll   大图补丁版 Game.dll (地图大小限制 8MB -> 1GB)
-                     MD5: 690A546C9567C598262518E830286CC3
+                     MD5: 690a546c9567c598262518e830286cc3
                      原版 MD5: 267861A0DFD416DBAD13E7EE3EC7794A
   maps\               放置平台图 (.w3x) 的目录
-  tools\              可选工具 (改键 + 调视距, 见"可选工具说明.txt"): SuWar3Tools / WarKey2017b
-  core2.exe           部署向导 (双击运行, 选游戏目录一键部署 + 启动)
+  tools\              改键/调视距工具 (SuWar3Tools 官方原版 + WarKey2017b, 部署后由
+                     war3.bat 自动启动 SuWar3Tools)
+  core2.exe           部署向导 (双击运行, 选游戏目录一键部署 + 升级覆盖)
 
 二、前提
   * 纯净版 魔兽争霸3 冰封王座 1.27 (1.27.0.52240)
-    - 其他版本 Game.dll 字节不同, 补丁会失效 (部署向导会自动检测 MD5 并拒绝覆盖)
+    - 其他版本 Game.dll 字节不同, 补丁会失效 (部署向导会自动检测 MD5 并处理)
   * 没有游戏目录? 把 version127a\ 里的文件复制成一个新目录, 即是完整 1.27a 客户端
   * 部署前请关闭正在运行的魔兽
+  * 游戏目录请放在浅路径 (如 E:\War3、D:\Game), 深层路径 YDWEConfig 无法启动
 
-三、部署步骤
-  方式 A - 部署向导 (推荐)
-    1. 解压本包到任意目录
-    2. 双击 core2.exe, 选择游戏目录 (或把游戏文件夹拖到窗口)
-    3. 点击"部署" - 向导自动完成: 校验 Game.dll -> 备份 -> 打大图补丁 ->
-       复制 bin\ + plugin\ -> 完成
-    4. 把要玩的平台图 (.w3x, 如西方世界的劫难7 约258MB 大图) 放进游戏目录
-       Maps\Download\ (或放到本包 maps\ 再手动复制)
-    5. 部署完成后双击游戏目录下的 war3.bat 启动游戏
-       (内容: bin\YDWEConfig.exe -launchwar3; 若没有可手动创建)
+三、部署步骤 (部署向导 core2.exe)
+  1. 解压本包到任意目录, 双击 core2.exe
+  2. 选择游戏目录 (或把游戏文件夹拖到窗口), 点击【开始部署】
+  3. 向导自动完成 (进度条):
+     a. 校验目录 (必须有 War3.exe 和 Game.dll)
+     b. 解压内置数据包到系统临时目录
+     c. 复制 bin\ + plugin\ + version127a\ + tools\ 到游戏目录 (已存在则覆盖)
+     d. 复制 Game_patched2.dll + 新版 war3.bat (单工具版启动器)
+     e. Game.dll 版本检测:
+        - 1.27a 原版 (MD5 267861A0...) -> 备份 Game.dll.bak, 打大图补丁 (8MB -> 1GB)
+        - 已补丁版 (MD5 690A546C...) -> 跳过
+        - 其他旧版本 (1.20e~1.27b) -> 备份 Game.dll.ver127bak, 自动转换到 1.27a 再打补丁
+     f. 自动清理临时目录
+  4. 把要玩的平台图 (.w3x, 如西方世界的劫难7 约258MB 大图) 放进游戏目录
+     Maps\Download\ (或放到本包 maps\ 再手动复制)
+  5. 部署完成后双击游戏目录下的 war3.bat 启动游戏
 
-  方式 B - 手动部署
-    1. 备份游戏目录 Game.dll -> Game.dll.bak
-    2. 把 Game_patched2.dll 覆盖到游戏目录 (MD5 校验: 见上方)
-    3. 把 bin\ 整个复制到游戏目录 (与 War3.exe 同级)
-    4. 把 plugin\ 整个复制到游戏目录 (与 War3.exe 同级)
-    5. 创建 war3.bat: 内容写 bin\YDWEConfig.exe -launchwar3
-    6. 平台图放入 游戏目录\Maps\Download\
-    7. 双击 war3.bat 启动 -> 主菜单 -> 自定义游戏 -> 选择图 -> 创建 -> 开始
+  升级覆盖: 朋友电脑已部署过旧版时, 重跑一次部署向导即可自动升级 -
+     新版 war3.bat 覆盖旧版 + 补齐 tools\ 工具 + 按 MD5 更新 Game.dll, 无需重下魔兽。
 
-四、可选工具 (改键 + 调视距)
-  本包 tools\ 带两个可选工具, 不部署、不注入, 双击运行后开游戏即可生效:
+四、启动游戏 (war3.bat)
+  游戏目录下 war3.bat 内容 (部署时自动生成/覆盖):
+    @echo off
+    cd /d %~dp0
+    for /f "delims=" %%f in ('dir /b "tools\SuWar3Tools\*.exe" 2^>nul') do (
+        start "" "tools\SuWar3Tools\%%f" & goto :tool_ok)
+    :tool_ok
+    bin\YDWEConfig.exe -launchwar3
 
-  1. SuWar3Tools\SuWar3Tools.exe  - 改键 + 调视距 一体工具 (官方最新版, war3tools.github.io)
-     [操作说明]
-     (1) 先双击运行 SuWar3Tools.exe (启动后自动最小化到后台), 再双击 war3.bat 启动游戏
-     (2) 游戏内随时按 Alt+Esc 调出工具的全局右键菜单, 可随时改键 / 调视距
-     (3) 视距调整方法: 地图加载完成后先保持初始视野 -> 按视距快捷键调整
-         (调整约 6 秒后视野自动生效) -> 按 Ctrl+视距快捷键可重置初始视野
-     (4) 若提示缺少 .NET Framework, 请安装 .NET Framework 4.7.2 运行库后重试
-     说明: 程序做了加密, 杀毒软件可能误报, 信任即可。
+  作用: 自动先启动 SuWar3Tools 改键/调视距工具 (后台常驻) -> 再启动游戏。
+  * 必须用 war3.bat 启动! 直接双击 War3.exe 插件不生效, 进图会弹回主菜单。
 
-  2. WarKey2017b\WarKey.exe      - 经典魔兽改键工具 (含 ManaBars.dll 蓝条显示)
-     把 WarKey.exe 和 ManaBars.dll 放一起, 双击 WarKey.exe 运行 -> 设置改键 -> 开游戏。
+五、改键 / 视距 / 菜单 操作 (SuWar3Tools)
+  * 工具随 war3.bat 自动启动, 无需手动运行
 
-  使用方法: 先运行对应工具 (设置好改键/视距) -> 再用 war3.bat 启动游戏。
+  1. 技能改键 (预配 QWER, 需游戏内校准一次):
+     - 软件已预配: CusSkill1-4 = Q/W/E/R
+     - 校准方法: 开启技能改键后, 把鼠标放到技能栏【第一格】中心,
+       按 Ctrl+Alt+左键 记录; 再放到【最后一格】中心, 按 Ctrl+Alt+左键 记录
+       (软件自动算出 12 格坐标)
+     - 之后按 Q / W / E / R 点击格子即可放技能, 全图通用
+  2. 视距调整:
+     - 小键盘【0】拉高视野, 小键盘【.】(小数点) 拉低视野
+     - 注意: 小键盘需要 NumLock 灯亮
+  3. 改键菜单:
+     - 游戏内按【F7】呼出 SuWar3Tools 改键/调视距菜单 (Menu.KeyPress=118)
+     - 不是 Alt+Esc! 那是 Windows 系统切换窗口的键, 游戏内按会切出游戏
+  4. 方案切换热键已禁用 (KeyPlanLast/KeyPlanNext=0), 用菜单内点击切换即可
 
-五、配合解锁注入器 (地图解锁版玩法)
+六、配合解锁注入器 (地图解锁版玩法)
   1. 环境对接: 本包部署完成后, 游戏目录已具备 bin\YDWEConfig.exe 与 plugin\warcraft3\,
-     解锁注入器注入完成后会自动检测这两项并提示"✔ 环境就绪"。
+     解锁注入器注入完成后会自动检测这两项并提示"环境就绪"。
   2. 选图解锁: 双击桌面「魔兽地图解锁注入器.exe」-> 选择地图 (或关联地图文件夹,
      自动递归扫描子目录所有 .w3x/.w3m) -> 勾选要解锁的功能 (商城/等级/存档等) ->
      点【开始注入】-> 解锁版图输出在 所选图/关联目录 下新建的 xgt\ 文件夹。
   3. 放图启动: 把 xgt\ 里的解锁版图复制到 游戏目录\Maps\Download\,
      双击游戏目录 war3.bat 启动 -> 自定义游戏 -> 选择图 -> 创建 -> 开始。
-     注意: 必须用 war3.bat 启动 (经 YDWE 增强环境加载 JAPI 插件),
-     直接双击 War3.exe 会弹回主菜单。
-  4. 一键流程: 部署环境 (本包 core2.exe) -> 选图解锁 (注入器) -> 放图启动 (war3.bat)。
+  4. 一键流程: 部署环境 (core2.exe) -> 选图解锁 (注入器) -> 放图启动 (war3.bat)。
 
-六、注意事项
-  * 杀毒软件可能拦截 war3.bat / YDWEConfig.exe / d3d8proxy.dll / 可选工具, 请添加信任放行
-  * plugin\warcraft3\config.cfg 可调插件开关; 其中 dzclient_api.dll = 1 必须保持开启
-  * Game.dll.bak 保留在游戏目录, 可随时还原
-  * 大图 (超过 8MB) 必须先部署本包, 否则游戏加载时会提示地图过大
-  * 若进图闪退: 确认 Game.dll 已打补丁, 确认是 1.27 纯净版
-  * 卸载: 删除部署到游戏目录的 bin\ + plugin\ + war3.bat, 用 Game.dll.bak 还原 Game.dll
-
-七、局域网联机
-  1. 每台机器各自部署本包 (游戏版本、插件包、地图文件三方完全一致)
-  2. 组网: 真实局域网直接玩; 跨网段用 Radmin VPN 组虚拟局域网
-  3. 主机 war3.bat 启动 -> 局域网 -> 创建游戏 -> 选图; 朋友局域网 -> 刷新 -> 加入
-  4. 重点: 所有玩家必须使用完全相同的图文件 (文件名与内容一致),
-     主机把图打包分发, 各自放到 游戏目录\Maps\Download\
-  5. 已验证可玩的图: 00test.w3x (约270MB, 权威SLK版, 单机进图/选英雄/游玩正常)
-
-【可选工具热键】F7 呼出 / F8 关闭（自动集成）
-- war3.bat 已自动集成：启动游戏前自动后台启动 SuWar3Tools（改键/调视距）与热键桥 HotkeyBridge。
-- 游戏内按 F7 呼出 SuWar3Tools 全局菜单（SuWar3Tools 原生热键 Menu.KeyPress=118，无修饰键），修改随时生效；按 F8 关闭菜单（HotkeyBridge 转发 Esc）。
-- 注意：原 F7/F8 改键方案切换热键已禁用（KeyPlanLast/KeyPlanNext=0），方案切换请在工具界面内点击操作。
-- 若 F8 无响应：按工具界面/菜单自身关闭方式退出（以工具实际行为为准）。
+七、注意事项
+  * 杀毒软件可能拦截 war3.bat / SuWar3Tools (程序有加密, 误报属正常), 请添加白名单
+  * 卸载: 删除游戏目录下 bin\ plugin\ war3.bat, Game.dll 用 Game.dll.bak 还原
+  * 本工具仅供离线单机游玩平台图/学习交流使用, 请支持正版
