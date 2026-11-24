@@ -11,4 +11,6 @@ for /f "delims=" %%f in ('dir /b "tools\SuWar3Tools\*.exe" 2^>nul') do (start ""
 :tool_ok
 rem Skillbar calibrator (writes SuWar3Tools.cfg automatically)
 if exist "tools\skillbar_reader.exe" start "SkillbarCal" /min "tools\skillbar_reader.exe" --daemon --log "tools\skillbar_cal.log"
+rem Keybind remapper (QWER group: F1-F4 -> Q/W/E/R, config tools\keybind.ini)
+if exist "tools\keybind.exe" start "Keybind" "tools\keybind.exe"
 bin\YDWEConfig.exe -launchwar3
