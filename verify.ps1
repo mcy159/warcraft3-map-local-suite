@@ -1,5 +1,9 @@
 # Map Local Suite - deployment verification script (PS 5.1 compatible, English output)
 # Usage: powershell -ExecutionPolicy Bypass -File verify.ps1 [game_dir]
+# NOTE (2026-11-24): item #4 war3.bat check switched from exact one-liner match to
+#   feature match (supports the 825B multi-tool launcher); item #5 (new) verifies
+#   tools\skillbar_reader.exe against the keybind-fix build (24,064B / EC195A3A).
+#   When skillbar_reader.exe is upgraded, update the expected size/MD5 here too.
 param(
     [string]$Target = ""
 )
@@ -52,12 +56,16 @@ if (Test-Path $cfg) {
     Report "plugin\warcraft3\config.cfg" $false "not found"
 }
 
-# 4. war3.bat content
+# 4. war3.bat content (feature check: YDWEConfig launcher + skillbar_reader daemon line)
 $bat = Join-Path $Target "war3.bat"
 if (Test-Path $bat) {
     $c = (Get-Content -Raw -Encoding Default $bat).Trim()
-    if ($c -eq "bin\YDWEConfig.exe -launchwar3") {
-        Report "war3.bat" $true "content OK"
+    $hasLaunch = ($c -match "bin\\YDWEConfig\.exe\s+-launchwar3")
+    $hasSkillbar = ($c -match "skillbar_reader")
+    if ($hasLaunch -and $hasSkillbar) {
+        Report "war3.bat" $true "multi-tool launcher OK (YDWEConfig + skillbar_reader)"
+    } elseif ($hasLaunch) {
+        Report "war3.bat" $false "old one-liner style: missing skillbar_reader daemon launcher"
     } else {
         Report "war3.bat" $false ("unexpected content: " + $c)
     }
@@ -65,7 +73,21 @@ if (Test-Path $bat) {
     Report "war3.bat" $false "not found"
 }
 
-# 5. Maps\Download exists (map drop folder)
+# 5. tools\skillbar_reader.exe (keybind-fix build: 24,064B, MD5 EC195A3A9226A05FD57FB27862385EEC)
+$sr = Join-Path $Target "tools\skillbar_reader.exe"
+if (Test-Path $sr) {
+    $srSize = (Get-Item $sr).Length
+    $srMd5 = (Get-FileHash -Algorithm MD5 $sr).Hash.ToUpper()
+    if ($srSize -eq 24064 -and $srMd5 -eq "EC195A3A9226A05FD57FB27862385EEC") {
+        Report "tools\skillbar_reader.exe" $true "24,064B EC195A3A (keybind-fix build) OK"
+    } else {
+        Report "tools\skillbar_reader.exe" $false ("size=" + $srSize + " md5=" + $srMd5 + " (expected 24064B / EC195A3A)")
+    }
+} else {
+    Report "tools\skillbar_reader.exe" $false "not found"
+}
+
+# 6. Maps\Download exists (map drop folder)
 $maps = Join-Path $Target "Maps\Download"
 if (Test-Path $maps) {
     $n = (Get-ChildItem $maps -Filter *.w3x -ErrorAction SilentlyContinue | Measure-Object).Count
