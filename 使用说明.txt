@@ -91,3 +91,22 @@
   * 本包支持多份魔兽安装共存：从哪个目录双击 war3.bat 启动，就玩哪个目录的魔兽。
   * war3.bat 启动时会自动把注册表 InstallPath 指向当前游戏目录（HKCU + HKLM\WOW6432Node 各一条），YDWEConfig 按注册表定位游戏，不会再串到别的安装。
   * 前提：每份魔兽都要各自部署过本包（bin/plugin/version127a/tools/Game.dll 补丁），直接复制部署好的整个游戏目录即可。
+九、keybind 技能改键（QWER 组，随包新增）
+  * 工具位置: tools\keybind.exe, 随 war3.bat 自动启动, 无需手动运行
+  * 零配置即用, 默认映射（QWER 组 = 技能栏 1-4 槽默认快捷键）:
+
+      物理键    触发技能键    对应技能槽位
+      F1    ->  Q            技能栏 1 槽
+      F2    ->  W            技能栏 2 槽
+      F3    ->  E            技能栏 3 槽
+      F4    ->  R            技能栏 4 槽
+
+  * 使用: 游戏内按 F1-F4 即可施放对应技能（等同按 Q/W/E/R）;
+    仅在游戏窗口前台 + 非聊天输入时生效, 切出游戏/打字聊天自动放行
+  * 自定义映射: 编辑 tools\keybind.ini 的 [Mappings] 段（格式 源键=目标键）,
+    重启 war3.bat（或结束 keybind 进程后重开）生效;
+    支持 A-Z / 0-9 / F1-F12 / NumPad0-NumPad9 或 0xNN 十六进制 VK
+  * 日志: tools\tools\keybind_cal.log, 含 "钩子已安装, 映射 4 条" 即正常运行
+  * 与 SuWar3Tools / WarKey2017b / skillbar_reader 并存无冲突
+    （keybind 只做键盘钩子, 不读游戏内存, 不写游戏配置）
+  * 卸载: 删除 tools\keybind.exe 与 tools\keybind.ini 即可, war3.bat 自动跳过
