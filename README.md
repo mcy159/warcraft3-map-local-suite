@@ -1,4 +1,4 @@
-﻿﻿# 魔兽地图离线游玩注入包（Map Local Suite）
+# 魔兽地图离线游玩注入包（Map Local Suite）
 
 让部分对战平台专属地图（HM3W 加密格式，如《西方世界的劫难7》等 RPG 图）在**纯净版《魔兽争霸 III》1.27a** 上离线单机 / 局域网联机游玩——断网时也能玩平台上的游戏。
 
@@ -26,6 +26,7 @@
 | `Game_patched2.dll` | 地图大小限制补丁（8MB → 1GB，大图可创建） |
 | `bin\` | YDWE 运行库（ydbase / YDWEConfig 等） |
 | `plugin\warcraft3\` | JAPI 插件全家（dzclient_api / dz_w3_plugin / yd_lua_engine 等，模拟扩展 API） |
+| `tools\keybind_panel.exe` | 改键面板（游戏内 F7 呼出：技能 12 格 3×4 / 物品 6 格点格改键、血条默认开、视距 `0` 拉远 `.` 拉近），由 `war3.bat` 自动启动 |
 
 ## 二、环境要求
 
@@ -56,7 +57,7 @@
    - 用法一：直接把 `war3.exe` **拖到 deploy.bat 图标上**（推荐）
    - 用法二：双击 deploy.bat，按提示输入游戏目录（或自动读注册表）
    - 脚本会：校验游戏版本 → 备份原版 Game.dll → 安装大图补丁 → 复制运行库和插件 → 生成 `war3.bat` → 分发地图
-4. **启动游戏**：双击游戏目录下的 **`war3.bat`**（不要直接双击 war3.exe！war3.bat 才会注入插件）
+4. **启动游戏**：双击游戏目录下的 **`war3.bat`**（不要直接双击 war3.exe！war3.bat 才会注入插件；它会先拉起 `tools\keybind_panel.exe` 改键面板，再启动游戏）
 5. 在游戏里进入 单人游戏 → 自定义游戏 → Download → 选你的地图 → 创建游戏 → 开始
 
 ## 五、联机（局域网）
@@ -72,7 +73,7 @@
 
 ## 七、验证
 
-`verify.ps1`（PowerShell）：检查 5 项（Game.dll 版本 / bin 完整 / plugin 完整 / war3.bat / 地图）：
+`verify.ps1`（PowerShell）：检查 6 项（Game.dll 版本 / bin 完整 / plugin 完整 / war3.bat（YDWEConfig + keybind_panel）/ `tools\keybind_panel.exe` 体积与 MD5 / Maps\Download）；另可加 `-Injector <注入器绿色包目录>` 追加校验解锁载荷：
 ```
 powershell -ExecutionPolicy Bypass -File verify.ps1 "游戏目录"
 ```
@@ -108,6 +109,7 @@ map_local_suite/
 ├── version127a\        # 1.27a 版本文件（11 文件，版本自动转换用）
 ├── patch_game.py       # 从原版重建补丁版 Game.dll 的脚本（逐字节一致）
 ├── gen_bat.py          # 重新生成 deploy/uninstall 脚本
+├── tools\              # 改键面板 keybind_panel.exe（F7 呼出）+ 可选工具说明.txt
 ├── bin\                # YDWE 运行库（72 文件）
 └── plugin\warcraft3\   # JAPI 插件（13 文件，config.cfg 9 插件全开）
 ```

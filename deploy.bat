@@ -163,8 +163,18 @@ if exist "%PKG%\plugin\warcraft3" (
   )
 )
 
+if exist "%PKG%\tools" (
+  if not exist "%TARGET%\tools" mkdir "%TARGET%\tools"
+  xcopy /e /i /y "%PKG%\tools\*.*" "%TARGET%\tools\" >nul
+  echo [OK] keybind panel copied to tools\
+)
+
 rem ---------- 5. …˙≥… war3.bat ----------
-> "%TARGET%\war3.bat" echo bin\YDWEConfig.exe -launchwar3
+if exist "%PKG%\war3.bat" (
+  copy /y "%PKG%\war3.bat" "%TARGET%\war3.bat" >nul
+) else (
+  > "%TARGET%\war3.bat" echo bin\YDWEConfig.exe -launchwar3
+)
 if errorlevel 1 (
   echo [¥ÌŒÛ] –¥»Î war3.bat  ß∞‹
   goto :fail

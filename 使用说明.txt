@@ -12,8 +12,8 @@
                      MD5: 690a546c9567c598262518e830286cc3
                      原版 MD5: 267861A0DFD416DBAD13E7EE3EC7794A
   maps\               放置平台图 (.w3x) 的目录
-  tools\              改键/调视距工具 (SuWar3Tools 官方原版 + WarKey2017b, 部署后由
-                     war3.bat 自动启动 SuWar3Tools)
+  tools\              改键面板 keybind_panel.exe (F7 呼出 / 技能 12 格 3x4 + 物品 6 格
+                     点格录制 / 血条默认开 / 视距 0 拉远 . 拉近, 由 war3.bat 自动启动)
   core2.exe           部署向导 (双击运行, 选游戏目录一键部署 + 升级覆盖)
 
 二、前提
@@ -30,7 +30,7 @@
      a. 校验目录 (必须有 War3.exe 和 Game.dll)
      b. 解压内置数据包到系统临时目录
      c. 复制 bin\ + plugin\ + version127a\ + tools\ 到游戏目录 (已存在则覆盖)
-     d. 复制 Game_patched2.dll + 新版 war3.bat (单工具版启动器)
+     d. 复制 Game_patched2.dll + 新版 war3.bat (改键面板版启动器)
      e. Game.dll 版本检测:
         - 1.27a 原版 (MD5 267861A0...) -> 备份 Game.dll.bak, 打大图补丁 (8MB -> 1GB)
         - 已补丁版 (MD5 690A546C...) -> 跳过
@@ -46,31 +46,48 @@
 四、启动游戏 (war3.bat)
   游戏目录下 war3.bat 内容 (部署时自动生成/覆盖):
     @echo off
+    title KK Local Suite - Play
     cd /d %~dp0
-    for /f "delims=" %%f in ('dir /b "tools\SuWar3Tools\*.exe" 2^>nul') do (
-        start "" "tools\SuWar3Tools\%%f" & goto :tool_ok)
-    :tool_ok
+    rem Multi-copy: point registry to this dir (YDWEConfig uses registry to find game)
+    set "GDIR=%~dp0"
+    set "GDIR=%GDIR:~0,-1%"
+    echo Y| reg add "HKCU\Software\Blizzard Entertainment\Warcraft III" /v InstallPath /d "%GDIR%" /f >nul 2>&1
+    echo Y| reg add "HKLM\SOFTWARE\WOW6432Node\Blizzard Entertainment\Warcraft III" /v InstallPath /d "%GDIR%" /f >nul 2>&1
+    rem Keybind panel (改键面板: 面板改键 + 血条默认开 + 视距 0/.)
+    if exist "tools\keybind_panel.exe" start "KeybindPanel" "tools\keybind_panel.exe"
     bin\YDWEConfig.exe -launchwar3
 
-  作用: 自动先启动 SuWar3Tools 改键/调视距工具 (后台常驻) -> 再启动游戏。
+  作用: 自动先启动改键面板 keybind_panel.exe (后台常驻) -> 再启动游戏。
   * 必须用 war3.bat 启动! 直接双击 War3.exe 插件不生效, 进图会弹回主菜单。
 
-五、改键 / 视距 / 菜单 操作 (SuWar3Tools)
-  * 工具随 war3.bat 自动启动, 无需手动运行
+五、改键面板使用 (keybind_panel.exe)
+  * 工具随 war3.bat 自动启动, 无需手动运行 (也可单独双击 tools\keybind_panel.exe)
 
-  1. 技能改键 (预配 QWER, 需游戏内校准一次):
-     - 软件已预配: CusSkill1-4 = Q/W/E/R
-     - 校准方法: 开启技能改键后, 把鼠标放到技能栏【第一格】中心,
-       按 Ctrl+Alt+左键 记录; 再放到【最后一格】中心, 按 Ctrl+Alt+左键 记录
-       (软件自动算出 12 格坐标)
-     - 之后按 Q / W / E / R 点击格子即可放技能, 全图通用
-  2. 视距调整:
-     - 小键盘【0】拉高视野, 小键盘【.】(小数点) 拉低视野
-     - 注意: 小键盘需要 NumLock 灯亮
-  3. 改键菜单:
-     - 游戏内按【F7】呼出 SuWar3Tools 改键/调视距菜单 (Menu.KeyPress=118)
-     - 不是 Alt+Esc! 那是 Windows 系统切换窗口的键, 游戏内按会切出游戏
-  4. 方案切换热键已禁用 (KeyPlanLast/KeyPlanNext=0), 用菜单内点击切换即可
+  1. 呼出/隐藏面板: 游戏内按 F7
+     (可改 tools\keybind.ini 的 [panel] PanelHotkey, 0=禁用)
+  2. 技能/物品改键 (录制式, 不用手改 ini):
+     - 面板布局 = 技能 12 格 (3x4, 对应技能栏 1-12) + 物品 6 格 (1 行, 对应物品栏
+       1-6, 未录制时显示默认数字 1-6)
+     - 点任意格子 -> 格子变黄「正在录制 slotN ... 请按新键 (Esc 取消)」->
+       按下想绑定的键 -> 该格显示新键名并立即生效 (自动保存 keybind.ini + 热重载)
+  3. 血条: 默认开启 (敌我血条都显示); 点面板状态行「血条:开/关」可切换
+  4. 视距镜头: 游戏内按 0 = 视距拉高/拉远 (默认 3000), 按 . = 视距拉近/恢复
+     (默认 1650 = war3 默认值); 点面板「视距:开/关」可关;
+     CamFar / CamNear 可在 keybind.ini 的 [panel] 段调整
+  5. 直配改键 (可选, 游戏外): 编辑 tools\keybind.ini 的 [Mappings] 段,
+     格式 源键=目标键, 保存即热重载, 无需进游戏。目标键支持:
+       1) A-Z 0-9 F1-F12 NumPad0-NumPad9 (直接键名, 触发该键本身)
+       2) 0xNN (十六进制 VK 码直写)
+       3) slotN -> 技能栏第 N 格 (N=1-12; 触发键=该格当前实际热键, 各图各格热键
+          不同, 需先录制该图一次; 录制结果自动保存到 keybind.ini 的 [SlotMap] 段)
+  6. 托盘菜单: 重新加载配置 / 编辑 keybind.ini (记事本) / 切换配置文件 /
+     血条切换 / 镜头开关 / 录制
+  7. 全局热键 (游戏内随时可用): Ctrl+Shift+F12 重载配置, Ctrl+Shift+F11 用记事本
+     打开当前配置; 可在 keybind.ini 的 [keybind] 段改 ReloadHotkey=/EditHotkey=
+     (0 或 none 禁用)
+  8. 面板置顶半透明、不抢游戏焦点 (WS_EX_NOACTIVATE, 不会打断操作); 再按 F7 隐藏
+  9. 日志: tools\keybind_panel_cal.log (含 "钩子已安装" 即正常运行)
+  10. 卸载: 删除 tools\keybind_panel.exe 与 tools\keybind.ini 即可, war3.bat 自动跳过
 
 六、配合解锁注入器 (地图解锁版玩法)
   1. 环境对接: 本包部署完成后, 游戏目录已具备 bin\YDWEConfig.exe 与 plugin\warcraft3\,
@@ -83,30 +100,36 @@
   4. 一键流程: 部署环境 (core2.exe) -> 选图解锁 (注入器) -> 放图启动 (war3.bat)。
 
 七、注意事项
-  * 杀毒软件可能拦截 war3.bat / SuWar3Tools (程序有加密, 误报属正常), 请添加白名单
+  * 杀毒软件可能拦截 war3.bat / keybind_panel.exe (程序有加密, 误报属正常), 请添加白名单
   * 卸载: 删除游戏目录下 bin\ plugin\ war3.bat, Game.dll 用 Game.dll.bak 还原
   * 本工具仅供离线单机游玩平台图/学习交流使用, 请支持正版
-
-八、多魔兽共存
-  * 本包支持多份魔兽安装共存：从哪个目录双击 war3.bat 启动，就玩哪个目录的魔兽。
-  * war3.bat 启动时会自动把注册表 InstallPath 指向当前游戏目录（HKCU + HKLM\WOW6432Node 各一条），YDWEConfig 按注册表定位游戏，不会再串到别的安装。
-  * 前提：每份魔兽都要各自部署过本包（bin/plugin/version127a/tools/Game.dll 补丁），直接复制部署好的整个游戏目录即可。
-九、keybind 技能改键（QWER 组，随包新增）
-  * 工具位置: tools\keybind.exe, 随 war3.bat 自动启动, 无需手动运行
-  * 零配置即用, 默认映射（QWER 组 = 技能栏 1-4 槽默认快捷键）:
 
-      物理键    触发技能键    对应技能槽位
-      F1    ->  Q            技能栏 1 槽
-      F2    ->  W            技能栏 2 槽
-      F3    ->  E            技能栏 3 槽
-      F4    ->  R            技能栏 4 槽
+八、多魔兽共存
+  * 本包支持多份魔兽安装共存：从哪个目录双击 war3.bat 启动，就玩哪个目录的魔兽。
+  * war3.bat 启动时会自动把注册表 InstallPath 指向当前游戏目录（HKCU + HKLM\WOW6432Node 各一条），YDWEConfig 按注册表定位游戏，不会再串到别的安装。
+  * 前提：每份魔兽都要各自部署过本包（bin/plugin/version127a/tools/Game.dll 补丁），直接复制部署好的整个游戏目录即可。
 
-  * 使用: 游戏内按 F1-F4 即可施放对应技能（等同按 Q/W/E/R）;
-    仅在游戏窗口前台 + 非聊天输入时生效, 切出游戏/打字聊天自动放行
-  * 自定义映射: 编辑 tools\keybind.ini 的 [Mappings] 段（格式 源键=目标键）,
-    重启 war3.bat（或结束 keybind 进程后重开）生效;
-    支持 A-Z / 0-9 / F1-F12 / NumPad0-NumPad9 或 0xNN 十六进制 VK
-  * 日志: tools\tools\keybind_cal.log, 含 "钩子已安装, 映射 4 条" 即正常运行
-  * 与 SuWar3Tools / WarKey2017b / skillbar_reader 并存无冲突
-    （keybind 只做键盘钩子, 不读游戏内存, 不写游戏配置）
-  * 卸载: 删除 tools\keybind.exe 与 tools\keybind.ini 即可, war3.bat 自动跳过
+九、keybind_panel v2 新增功能 (2026-11-25)
+  1. 槽位驱动 42 格映射：技能 12 格 (4x3) + 物品 6 格 (2x3) + 书页/商店预留格；
+     映射与英雄/技能内容无关，换英雄换图不失效（引擎槽位稳定）
+  2. 右键点格 = 录制该格当前触发键：游戏内按该格当前实际热键，写入 [SlotTriggers]
+     覆盖默认 QWER/1-6 表（左键点格仍是绑定快捷键）
+  3. 多配置 profiles：托盘菜单「配置文件」子菜单切换 keybind*.ini
+     （如 keybind_heroA.ini），点击即切换并热重载
+  4. 视距 0/. 修复：Attach 改用 EnumWindows+psapi（必须 x86），写入偏移可在
+     keybind.ini [panel] 段配置 CamOffs（默认 0x5B0）——注意：该偏移是每帧派生的
+     渲染值，0/. 是否在游戏内真正生效需进图验证（主菜单下不生效属正常）
+十、keybind_panel v3 自动读 hotkey (2026-11-25)
+  1. 自动读技能栏 hotkey（AutoReadHotkeys=1 默认开）：
+     启动后以只读方式（RPM 直读内存，不注入、不改游戏进程）自动读取当前游戏中
+     技能栏 12 格(3x4)与物品栏 6 格(2x3)正在使用的实际 hotkey，实时显示在面板；
+     读取链 [Game.dll+0xBE6350]->CGameUI->CCommandBar->槽表->按钮->按钮数据
+     ->"Hotkey"字段，逐级校验 vtable 防偏移漂移。
+  2. 显示颜色：青色 = 自动读到的 hotkey；白色 = 手动录制；黄色 = 录制中。
+     触发键优先级：自动读 > 录制 > 默认 QWER/TGB/1-6（自动读未命中时回落录制/默认）。
+  3. 物品栏探测：v3 在 CGameUI 内探测候选偏移 {0x3BC,0x3F4,0x3F8,0x3C0,0x374}，
+     命中即同链读取物品 6 格；全部未命中显示 NOITEM 并回落录制/默认。
+  4. 开关：keybind.ini [panel] 段 AutoReadHotkeys=1 开 / 0 关（托盘菜单也可切换），
+     关闭后恢复"录制 > 默认"逻辑。
+  5. 首次进图若技能格显示青色键即全链正确；若日志出现 CHAIN 状态说明偏移已漂移，
+     需按新版本 game.dll 重校（多版本偏移表留待后续版本）。

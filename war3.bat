@@ -6,11 +6,6 @@ set "GDIR=%~dp0"
 set "GDIR=%GDIR:~0,-1%"
 echo Y| reg add "HKCU\Software\Blizzard Entertainment\Warcraft III" /v InstallPath /d "%GDIR%" /f >nul 2>&1
 echo Y| reg add "HKLM\SOFTWARE\WOW6432Node\Blizzard Entertainment\Warcraft III" /v InstallPath /d "%GDIR%" /f >nul 2>&1
-rem Optional: start SuWar3Tools (keyboard/camera tool) in background
-for /f "delims=" %%f in ('dir /b "tools\SuWar3Tools\*.exe" 2^>nul') do (start "" "tools\SuWar3Tools\%%f" & goto :tool_ok)
-:tool_ok
-rem Skillbar calibrator (writes SuWar3Tools.cfg automatically)
-if exist "tools\skillbar_reader.exe" start "SkillbarCal" /min "tools\skillbar_reader.exe" --daemon --log "tools\skillbar_cal.log"
-rem Keybind remapper (QWER group: F1-F4 -> Q/W/E/R, config tools\keybind.ini)
-if exist "tools\keybind.exe" start "Keybind" "tools\keybind.exe"
+rem Keybind panel (改键面板: 面板改键 + 血条默认开 + 视距 0/.)
+if exist "tools\keybind_panel.exe" start "KeybindPanel" "tools\keybind_panel.exe"
 bin\YDWEConfig.exe -launchwar3

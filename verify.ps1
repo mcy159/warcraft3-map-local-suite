@@ -1,11 +1,13 @@
 # Map Local Suite - deployment verification script (PS 5.1 compatible, English output)
 # Usage: powershell -ExecutionPolicy Bypass -File verify.ps1 [game_dir]
-# NOTE (2026-11-24): item #4 war3.bat check switched from exact one-liner match to
-#   feature match (supports the 825B multi-tool launcher); item #5 (new) verifies
-#   tools\skillbar_reader.exe against the keybind-fix build (24,064B / EC195A3A).
-#   When skillbar_reader.exe is upgraded, update the expected size/MD5 here too.
+# NOTE (2026-11-25): war3.bat feature check now matches the keybind_panel launcher
+#   (skillbar_reader / keybind.exe were removed in the pkg-sync cleanup); item #5
+#   verifies tools\keybind_panel.exe against the v3 build (59,904B / C5973F2E...,
+#   AutoReadHotkeys auto-read skillbar/item hotkeys via RPM read-only). When the
+#   panel is upgraded, update the expected size/MD5 here too.
 param(
-    [string]$Target = ""
+    [string]$Target = "",
+    [string]$Injector = ""   # 注入器绿色包目录（可选；空=自动探测桌面/工作区）
 )
 $ErrorActionPreference = "Stop"
 
@@ -56,16 +58,16 @@ if (Test-Path $cfg) {
     Report "plugin\warcraft3\config.cfg" $false "not found"
 }
 
-# 4. war3.bat content (feature check: YDWEConfig launcher + skillbar_reader daemon line)
+# 4. war3.bat content (feature check: YDWEConfig launcher + keybind_panel daemon line)
 $bat = Join-Path $Target "war3.bat"
 if (Test-Path $bat) {
     $c = (Get-Content -Raw -Encoding Default $bat).Trim()
     $hasLaunch = ($c -match "bin\\YDWEConfig\.exe\s+-launchwar3")
-    $hasSkillbar = ($c -match "skillbar_reader")
-    if ($hasLaunch -and $hasSkillbar) {
-        Report "war3.bat" $true "multi-tool launcher OK (YDWEConfig + skillbar_reader)"
+    $hasPanel = ($c -match "keybind_panel")
+    if ($hasLaunch -and $hasPanel) {
+        Report "war3.bat" $true "launcher OK (YDWEConfig + keybind_panel)"
     } elseif ($hasLaunch) {
-        Report "war3.bat" $false "old one-liner style: missing skillbar_reader daemon launcher"
+        Report "war3.bat" $false "missing keybind_panel daemon launcher"
     } else {
         Report "war3.bat" $false ("unexpected content: " + $c)
     }
@@ -73,18 +75,18 @@ if (Test-Path $bat) {
     Report "war3.bat" $false "not found"
 }
 
-# 5. tools\skillbar_reader.exe (keybind-fix build: 24,064B, MD5 EC195A3A9226A05FD57FB27862385EEC)
-$sr = Join-Path $Target "tools\skillbar_reader.exe"
+# 5. tools\keybind_panel.exe (v3 build: 59,904B, MD5 C5973F2E82B92403863C69BC25239961)
+$sr = Join-Path $Target "tools\keybind_panel.exe"
 if (Test-Path $sr) {
     $srSize = (Get-Item $sr).Length
     $srMd5 = (Get-FileHash -Algorithm MD5 $sr).Hash.ToUpper()
-    if ($srSize -eq 24064 -and $srMd5 -eq "EC195A3A9226A05FD57FB27862385EEC") {
-        Report "tools\skillbar_reader.exe" $true "24,064B EC195A3A (keybind-fix build) OK"
+    if ($srSize -eq 59904 -and $srMd5 -eq "C5973F2E82B92403863C69BC25239961") {
+        Report "tools\keybind_panel.exe" $true "59,904B C5973F2E (v3 auto-read hotkeys) OK"
     } else {
-        Report "tools\skillbar_reader.exe" $false ("size=" + $srSize + " md5=" + $srMd5 + " (expected 24064B / EC195A3A)")
+        Report "tools\keybind_panel.exe" $false ("size=" + $srSize + " md5=" + $srMd5 + " (expected 59904B / C5973F2E...)")
     }
 } else {
-    Report "tools\skillbar_reader.exe" $false "not found"
+    Report "tools\keybind_panel.exe" $false "not found"
 }
 
 # 6. Maps\Download exists (map drop folder)
@@ -94,6 +96,53 @@ if (Test-Path $maps) {
     Report "Maps\Download" $true ("folder OK, w3x count: " + $n)
 } else {
     Report "Maps\Download" $false "folder missing"
+}
+
+# 7. injector green package (runtime unlock payload: kkemu_unlock.dll generic 6-native build)
+#    Expected: engine\unlock\kkemu_unlock.dll 46,592B SHA256 222039D9...8AC568
+#              MapModGUI.exe 43,520B SHA256 1CB96DE1...BCB51 (GUI v1.5)
+$injRoot = $Injector
+if (-not $injRoot) {
+    $cands = @(
+        (Join-Path (Split-Path $Target -Parent) "注入器绿色包"),
+        "C:\Users\Administrator\Desktop\注入器绿色包",
+        "E:\aiwork\kk_re\deliverable\injector_green"
+    )
+    foreach ($c in $cands) { if (-not $injRoot -and (Test-Path (Join-Path $c "engine\unlock\kkemu_unlock.dll"))) { $injRoot = $c } }
+}
+if ($injRoot -and (Test-Path $injRoot)) {
+    Write-Host ("   (injector package: {0})" -f $injRoot)
+    $dll = Join-Path $injRoot "engine\unlock\kkemu_unlock.dll"
+    if (Test-Path $dll) {
+        $dSize = (Get-Item $dll).Length
+        $dSha = (Get-FileHash -Algorithm SHA256 $dll).Hash.ToUpper()
+        if ($dSize -eq 46592 -and $dSha -eq "222039D99349B969FF2DA6079EE7EF0B7719EDD37EF8E9FB988885C9178AC568") {
+            Report "unlock\kkemu_unlock.dll" $true "46,592B 222039D9 (generic 6-native) OK"
+        } else {
+            Report "unlock\kkemu_unlock.dll" $false ("size=" + $dSize + " sha256=" + $dSha + " (expected 46592 / 222039D9...)")
+        }
+    } else {
+        Report "unlock\kkemu_unlock.dll" $false "not found"
+    }
+    foreach ($n in @("inject_unlock.py", "hook32.ps1", "unlock_rva.json", "native_table.json", "datatype_map.flat.json", "push_policy.py", "config.json")) {
+        Report ("unlock\" + $n) (Test-Path (Join-Path $injRoot ("engine\unlock\" + $n))) "payload file"
+    }
+    $stale = Join-Path $injRoot "engine\unlock\kkemu_unlock_t3.dll"
+    Report "unlock\ no stale T3 dll" (-not (Test-Path $stale)) "old T3 must live in _legacy_t3\ only"
+    $gui = Join-Path $injRoot "MapModGUI.exe"
+    if (Test-Path $gui) {
+        $gSize = (Get-Item $gui).Length
+        $gSha = (Get-FileHash -Algorithm SHA256 $gui).Hash.ToUpper()
+        if ($gSize -eq 43520 -and $gSha -eq "1CB96DE15B2692E897A3A4110E89EB20421C421977DD543C31851953BB9BCB51") {
+            Report "MapModGUI.exe" $true "43,520B 1CB96DE1 (v1.5 generic-unlock GUI) OK"
+        } else {
+            Report "MapModGUI.exe" $false ("size=" + $gSize + " sha256=" + $gSha + " (expected 43520 / 1CB96DE1...)")
+        }
+    } else {
+        Report "MapModGUI.exe" $false "not found"
+    }
+} else {
+    Write-Host "   (injector package: not found - skipped; pass -Injector DIR to verify unlock payload)" -ForegroundColor Yellow
 }
 
 Write-Host ""
